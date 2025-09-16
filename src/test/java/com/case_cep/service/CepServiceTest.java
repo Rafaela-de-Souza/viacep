@@ -22,9 +22,9 @@ class CepServiceTest {
         assertNotNull(response);
         assertEquals("01001-000", response.getCep());
         assertEquals("praça da sé", response.getLogradouro());
-        assertEquals("sé", response.getBairro());
-        assertEquals("são paulo", response.getLocalidade());
-        assertEquals("sp", response.getUf());
+        assertEquals("Sé", response.getBairro());
+        assertEquals("São Paulo", response.getLocalidade());
+        assertEquals("SP", response.getUf());
     }
 
     @Test
