@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
-import com.case_cep.model.ConsultaCep;
+import com.case_cep.model.ConsultaEndereco;
 
 class ExcelExportServiceTest {
 
@@ -16,7 +16,7 @@ class ExcelExportServiceTest {
 
     @Test
     void testExportarConsultasParaExcel() throws IOException {
-        ConsultaCep consulta = new ConsultaCep();
+        ConsultaEndereco consulta = new ConsultaEndereco();
         consulta.setId(1L);
         consulta.setCep("01001-000");
         consulta.setLogradouro("praça da sé");
@@ -24,7 +24,7 @@ class ExcelExportServiceTest {
         consulta.setUf("sp");
         consulta.setDataConsulta(LocalDateTime.now());
 
-        List<ConsultaCep> consultas = List.of(consulta);
+        List<ConsultaEndereco> consultas = List.of(consulta);
         byte[] arquivo = excelExportService.exportarConsultasParaExcel(consultas);
         assertNotNull(arquivo);
         assertTrue(arquivo.length > 0);

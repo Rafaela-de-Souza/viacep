@@ -8,17 +8,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import com.case_cep.model.CepResponse;
+import com.case_cep.model.EnderecoResponse;
 
 @SpringBootTest
-class CepServiceTest {
+class EnderecoServiceTest {
 
     @Autowired
-    private CepService cepService;
+    private EnderecoService enderecoService;
 
     @Test
-    void testBuscarCepValido() {
-        CepResponse response = cepService.buscarCep("01001000");
+    void testBuscarEnderecoValido() {
+        EnderecoResponse response = enderecoService.buscarEndereco("01001000");
         assertNotNull(response);
         assertEquals("01001-000", response.getCep());
         assertEquals("praça da sé", response.getLogradouro());
@@ -28,18 +28,18 @@ class CepServiceTest {
     }
 
     @Test
-    void testBuscarCepInvalido() {
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            cepService.buscarCep("123");
+    void testBuscarEnderecoInvalido() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            enderecoService.buscarEndereco("123");
         });
-        assertTrue(exception.getMessage().contains("CEP inválido"));
+        assertTrue(exception.getMessage().contains("8 dígitos"));
     }
 
     @Test
-    void testBuscarCepNaoEncontrado() {
-        Exception exception = assertThrows(CepService.CepNotFoundException.class, () -> {
-            cepService.buscarCep("00000000");
+    void testBuscarEnderecoNaoEncontrado() {
+        EnderecoService.EnderecoNotFoundException exception = assertThrows(EnderecoService.EnderecoNotFoundException.class, () -> {
+            enderecoService.buscarEndereco("00000000");
         });
-        assertTrue(exception.getMessage().contains("CEP não encontrado"));
+        assertTrue(exception.getMessage().contains("não encontrado"));
     }
 }

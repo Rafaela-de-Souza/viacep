@@ -17,41 +17,44 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.case_cep.model.CepResponse;
-import com.case_cep.model.ConsultaCep;
-import com.case_cep.service.CepService;
+import com.case_cep.model.ConsultaEndereco;
+import com.case_cep.model.EnderecoResponse;
+import com.case_cep.service.EnderecoService;
+import com.case_cep.service.EnderecoValidator;
 import com.case_cep.service.ExcelExportService;
 
 @RestController
 @RequestMapping("/enderecos")
 public class EnderecoController {
 
-    private final CepService cepService;
+    private final EnderecoService enderecoService;
     private final ExcelExportService excelExportService;
+    private final EnderecoValidator enderecoValidator;
 
-    public EnderecoController(CepService cepService, ExcelExportService excelExportService) {
-        this.cepService = cepService;
+    public EnderecoController(EnderecoService enderecoService, ExcelExportService excelExportService, EnderecoValidator enderecoValidator) {
+        this.enderecoService = enderecoService;
         this.excelExportService = excelExportService;
+        this.enderecoValidator = enderecoValidator;
     }
 
     @GetMapping
-    public ResponseEntity<?> consultarEnderecos(@RequestParam(required = false) String cep, 
-                                                @RequestParam(required = false) List<String> ceps) {
-        validarParametros(cep, ceps);
+    public ResponseEntity<?> consultarEnderecos(@RequestParam(required = false) String endereco, 
+                                                @RequestParam(required = false) List<String> enderecos) {
+        validarParametros(endereco, enderecos);
         
-        if (cep != null && !cep.isEmpty()) {
-            return consultarCepUnico(cep);
+        if (endereco != null && !endereco.isEmpty()) {
+            return consultarEnderecoUnico(endereco);
         }
         
-        return consultarMultiplosCeps(ceps);
+        return consultarMultiplosEnderecos(enderecos);
     }
 
     @GetMapping("/excel")
-    public ResponseEntity<byte[]> exportarExcel(@RequestParam(required = false) String cep, 
-                                               @RequestParam(required = false) List<String> ceps) throws IOException {
-        validarParametros(cep, ceps);
+    public ResponseEntity<byte[]> exportarExcel(@RequestParam(required = false) String endereco, 
+                                               @RequestParam(required = false) List<String> enderecos) throws IOException {
+        validarParametros(endereco, enderecos);
         
-        List<ConsultaCep> consultas = coletarConsultas(cep, ceps);
+        List<ConsultaEndereco> consultas = coletarConsultas(endereco, enderecos);
         
         if (consultas.isEmpty()) {
             throw new ResponseStatusException(
@@ -66,45 +69,46 @@ public class EnderecoController {
             .body(arquivo);
     }
     
-    private void validarParametros(String cep, List<String> ceps) {
-        if ((cep == null || cep.isEmpty()) && (ceps == null || ceps.isEmpty())) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "É necessário fornecer 'cep' para consulta única ou 'ceps' para consulta múltipla"
+    private void validarParametros(String endereco, List<String> enderecos) {
+        if ((endereco == null || endereco.trim().isEmpty()) && (enderecos == null || enderecos.isEmpty())) {
+            throw new IllegalArgumentException(
+                "É necessário fornecer 'endereco' para consulta única ou 'enderecos' para consulta múltipla"
             );
+        }
+        
+        if (endereco != null && !endereco.trim().isEmpty()) {
+            enderecoValidator.validarEnderecoUnico(endereco);
+        }
+        
+        if (enderecos != null && !enderecos.isEmpty()) {
+            enderecoValidator.validarListaEnderecos(enderecos);
         }
     }
     
-    private ResponseEntity<CepResponse> consultarCepUnico(String cep) {
-        try {
-            CepResponse response = cepService.buscarCep(cep);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        } catch (CepService.CepNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        } catch (Exception e) {
-            throw new ResponseStatusException(
-                HttpStatus.SERVICE_UNAVAILABLE, 
-                "Erro ao consultar serviço externo. Tente novamente mais tarde."
-            );
-        }
+    private ResponseEntity<EnderecoResponse> consultarEnderecoUnico(String endereco) {
+        EnderecoResponse response = enderecoService.buscarEndereco(endereco);
+        return ResponseEntity.ok(response);
     }
     
-    private ResponseEntity<Map<String, Object>> consultarMultiplosCeps(List<String> ceps) {
-        List<CepResponse> encontrados = new ArrayList<>();
+    private ResponseEntity<Map<String, Object>> consultarMultiplosEnderecos(List<String> enderecos) {
+        List<EnderecoResponse> encontrados = new ArrayList<>();
         List<String> naoEncontrados = new ArrayList<>();
         
-        for (String cepItem : ceps) {
+        for (String enderecoItem : enderecos) {
             try {
-                CepResponse resp = cepService.buscarCep(cepItem);
+                if (!enderecoValidator.isEnderecoValido(enderecoItem)) {
+                    naoEncontrados.add(enderecoItem);
+                    continue;
+                }
+                
+                EnderecoResponse resp = enderecoService.buscarEndereco(enderecoItem);
                 if (resp != null) {
                     encontrados.add(resp);
                 } else {
-                    naoEncontrados.add(cepItem);
+                    naoEncontrados.add(enderecoItem);
                 }
             } catch (Exception e) {
-                naoEncontrados.add(cepItem);
+                naoEncontrados.add(enderecoItem);
             }
         }
         
@@ -114,43 +118,46 @@ public class EnderecoController {
         return ResponseEntity.ok(resultado);
     }
     
-    private List<ConsultaCep> coletarConsultas(String cep, List<String> ceps) {
-        List<ConsultaCep> consultas = new ArrayList<>();
+    private List<ConsultaEndereco> coletarConsultas(String endereco, List<String> enderecos) {
+        List<ConsultaEndereco> consultas = new ArrayList<>();
         AtomicLong contador = new AtomicLong(1);
         
-        if (cep != null && !cep.isEmpty()) {
-            adicionarConsultaSeValida(cep, consultas, contador);
+        if (endereco != null && !endereco.isEmpty()) {
+            adicionarConsultaSeValida(endereco, consultas, contador);
         }
         
-        if (ceps != null && !ceps.isEmpty()) {
-            for (String cepItem : ceps) {
-                adicionarConsultaSeValida(cepItem, consultas, contador);
+        if (enderecos != null && !enderecos.isEmpty()) {
+            for (String enderecoItem : enderecos) {
+                adicionarConsultaSeValida(enderecoItem, consultas, contador);
             }
         }
         
         return consultas;
     }
     
-    private void adicionarConsultaSeValida(String cep, List<ConsultaCep> consultas, AtomicLong contador) {
+    private void adicionarConsultaSeValida(String endereco, List<ConsultaEndereco> consultas, AtomicLong contador) {
         try {
-            CepResponse response = cepService.buscarCep(cep);
-            if (response != null) {
-                ConsultaCep consultaCep = criarConsultaCep(response, contador.getAndIncrement());
-                consultas.add(consultaCep);
+            // Validação antes de tentar buscar
+            if (!enderecoValidator.isEnderecoValido(endereco)) {
+                return; // Endereço inválido - pula
             }
-        } catch (Exception e) {
-            // CEP inválido ou erro na consulta - continua sem adicionar
-        }
+            
+            EnderecoResponse response = enderecoService.buscarEndereco(endereco);
+            if (response != null) {
+                ConsultaEndereco consultaEndereco = criarConsultaEndereco(response, contador.getAndIncrement());
+                consultas.add(consultaEndereco);
+            }
+        } catch (Exception e) {}
     }
     
-    private ConsultaCep criarConsultaCep(CepResponse response, long id) {
-        ConsultaCep consultaCep = new ConsultaCep();
-        consultaCep.setId(id);
-        consultaCep.setCep(response.getCep());
-        consultaCep.setLogradouro(response.getLogradouro());
-        consultaCep.setLocalidade(response.getLocalidade());
-        consultaCep.setUf(response.getUf());
-        consultaCep.setDataConsulta(LocalDateTime.now());
-        return consultaCep;
+    private ConsultaEndereco criarConsultaEndereco(EnderecoResponse response, long id) {
+        ConsultaEndereco consultaEndereco = new ConsultaEndereco();
+        consultaEndereco.setId(id);
+        consultaEndereco.setCep(response.getCep());
+        consultaEndereco.setLogradouro(response.getLogradouro());
+        consultaEndereco.setLocalidade(response.getLocalidade());
+        consultaEndereco.setUf(response.getUf());
+        consultaEndereco.setDataConsulta(LocalDateTime.now());
+        return consultaEndereco;
     }
 }
