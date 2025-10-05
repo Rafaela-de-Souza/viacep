@@ -11,14 +11,14 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
-import com.case_cep.model.ConsultaCep;
+import com.case_cep.model.ConsultaEndereco;
 
 @Service
 public class ExcelExportService {
 
-    public byte[] exportarConsultasParaExcel(List<ConsultaCep> consultas) throws IOException {
+    public byte[] exportarConsultasParaExcel(List<ConsultaEndereco> consultas) throws IOException {
         try (Workbook workbook = new XSSFWorkbook()) {
-            Sheet sheet = workbook.createSheet("Consultas CEP");
+            Sheet sheet = workbook.createSheet("Consultas Endereço");
 
             Row header = sheet.createRow(0);
             String[] colunas = {"ID", "CEP", "Logradouro", "Localidade", "UF", "Data Consulta"};
@@ -29,7 +29,7 @@ public class ExcelExportService {
             }
 
             int rowNum = 1;
-            for (ConsultaCep c : consultas) {
+            for (ConsultaEndereco c : consultas) {
                 Row row = sheet.createRow(rowNum++);
                 row.createCell(0).setCellValue(c.getId());
                 row.createCell(1).setCellValue(c.getCep());
