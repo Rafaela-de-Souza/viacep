@@ -70,10 +70,6 @@ public class EnderecoController {
             .body(arquivo);
     }
     
-
-
-
-    
     private ResponseEntity<?> processarConsultaCeps(List<String> ceps) {
         List<EnderecoResponse> encontrados = new ArrayList<>();
         List<Map<String, String>> erros = new ArrayList<>();
@@ -144,7 +140,7 @@ public class EnderecoController {
     private void adicionarConsultaSeValida(String endereco, List<ConsultaEndereco> consultas, AtomicLong contador) {
         ConsultaEndereco consultaEndereco = new ConsultaEndereco();
         consultaEndereco.setId(contador.getAndIncrement());
-        consultaEndereco.setCep(endereco); // Sempre inclui o CEP original
+        consultaEndereco.setCep(endereco); 
         consultaEndereco.setDataConsulta(LocalDateTime.now());
         
         try {
@@ -153,7 +149,7 @@ public class EnderecoController {
             if (enderecoValidator.isEnderecoValido(cepLimpo)) {
                 EnderecoResponse response = enderecoService.buscarEndereco(cepLimpo);
                 if (response != null) {
-                    consultaEndereco.setCep(response.getCep()); // Usa o CEP formatado da resposta
+                    consultaEndereco.setCep(response.getCep());
                     consultaEndereco.setLogradouro(response.getLogradouro());
                     consultaEndereco.setLocalidade(response.getLocalidade());
                     consultaEndereco.setUf(response.getUf());

@@ -48,7 +48,6 @@ class EnderecoValidatorTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             enderecoValidator.validarEnderecoUnico("0100a000");
         });
-        // Após limpar "0100a000" vira "0100000" (7 dígitos), então falha no tamanho
         assertTrue(exception.getMessage().contains("exatamente 8 dígitos"));
     }
 
@@ -57,7 +56,6 @@ class EnderecoValidatorTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             enderecoValidator.validarEnderecoUnico("abcdefgh");
         });
-        // Após limpar "abcdefgh" vira "" (vazio), então falha na validação de números
         assertTrue(exception.getMessage().contains("apenas números"));
     }
 
@@ -115,14 +113,9 @@ class EnderecoValidatorTest {
 
     @Test
     void testCenarioToleranciaErros() {
-        // Testa CEPs com diferentes tipos de problemas para documentar comportamento
-        // Este teste documenta como o endpoint deve se comportar com CEPs problemáticos
-        
-        // CEPs válidos após limpeza
         assertTrue(enderecoValidator.isEnderecoValido(enderecoValidator.limparEndereco("01001-000")));
         assertTrue(enderecoValidator.isEnderecoValido(enderecoValidator.limparEndereco("12.345-678")));
         
-        // CEPs inválidos mesmo após limpeza
         assertFalse(enderecoValidator.isEnderecoValido(enderecoValidator.limparEndereco("123")));
         assertFalse(enderecoValidator.isEnderecoValido(enderecoValidator.limparEndereco("abc12345")));
         assertFalse(enderecoValidator.isEnderecoValido(enderecoValidator.limparEndereco("")));
