@@ -1,5 +1,6 @@
 package com.case_cep.service;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -15,6 +16,7 @@ public class EnderecoService {
         this.enderecoValidator = enderecoValidator;
     }
 
+    @Cacheable(value = "enderecos", key = "#endereco")
     public EnderecoResponse buscarEndereco(String endereco) {
             enderecoValidator.validarEnderecoUnico(endereco);
             String enderecoLimpo = enderecoValidator.limparEndereco(endereco);
